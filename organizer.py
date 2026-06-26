@@ -14,7 +14,7 @@ def confirm_prompt(prompt: str) -> bool:
         print("Please enter y or n.")
 
 
-DRY_RUN = False
+DRY_RUN = True
 
 CATEGORIES = {
     ".pdf": "Documents",
