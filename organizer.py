@@ -14,6 +14,8 @@ def confirm_prompt(prompt: str) -> bool:
         print("Please enter y or n.")
 
 
+DRY_RUN = False
+
 CATEGORIES = {
     ".pdf": "Documents",
     ".dmg": "Programs",
@@ -25,28 +27,58 @@ CATEGORIES = {
     ".epub": "Documents/Books",
 }
 
+files_to_move = list()
+dirs_to_create = set()
 
-skipped_dirs = set()
+working_directory = Path(
+    input("Specify a working directory that you want to organize: ").strip()
+)
 
-downloads = Path.home() / "Downloads"
+if not working_directory.exists():
+    print(f"{working_directory} does not exist.")
+    exit(1)
 
-for item in downloads.iterdir():
-    if item.is_file():
-        category = CATEGORIES.get(item.suffix.lower(), "Other")
-        target_dir = downloads / category
+if not working_directory.is_dir():
+    print(f"{working_directory} is not a directory.")
+    exit(1)
 
-        if confirm_prompt(f"Create directory {target_dir}?"):
-            print(f"Creating {target_dir}...")
-            # target_dir.mkdir(parents=True, exist_ok=True)
-        else:
-            skipped_dirs.add(target_dir)
-            print("Skipping...")
+for item in working_directory.iterdir():
+    if not item.is_file():
+        continue
 
-        if target_dir in skipped_dirs:
-            print(f"Skipping {str(item)} since {target_dir} was not created")
-        else:
-            if confirm_prompt(f"Move {item.name} --> {target_dir}?"):
-                print(f"moving {str(item)} ->{str(target_dir / item)}...")
-                # shutil.move(str(item), str(target_dir / item.name))
-            else:
-                print("Skipping...")
+    category = CATEGORIES.get(item.suffix.lower(), "Other")
+    target_dir = working_directory / category
+    if confirm_prompt(f"Move {item.name} --> {target_dir}?"):
+        files_to_move.append({"file": item, "destination_dir": target_dir})
+
+for file in files_to_move:
+    if not file["destination_dir"].exists():
+        dirs_to_create.add(file["destination_dir"])
+
+
+print("Creating directories to move files to...")
+for dir in dirs_to_create:
+    if DRY_RUN:
+        print(f"Would create {dir}")
+    else:
+        dir.mkdir(parents=True, exist_ok=True)
+
+print("Directories created...")
+print("Moving files...")
+
+summary = ""
+
+for file in files_to_move:
+    if DRY_RUN:
+        summary += f"Would move {file['file'].name} to {file['destination_dir']}\n"
+    else:
+        summary += f"Will move {file['file'].name} to {file['destination_dir']}\n"
+
+print(summary)
+
+if DRY_RUN:
+    exit("DRY_RUN: Stopping the script.")
+
+if confirm_prompt("Proceed with moving files:"):
+    for file in files_to_move:
+        shutil.move(file["file"], file["destination_dir"])
