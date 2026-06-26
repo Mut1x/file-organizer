@@ -1,18 +1,6 @@
 import shutil
+import sys
 from pathlib import Path
-
-
-def confirm_prompt(prompt: str) -> bool:
-    while True:
-        response = input(f"{prompt} (y/n)").strip().lower()
-
-        if response in ("y", "yes"):
-            return True
-        if response in ("n", "no"):
-            return False
-
-        print("Please enter y or n.")
-
 
 DRY_RUN = True
 
@@ -27,58 +15,76 @@ CATEGORIES = {
     ".epub": "Documents/Books",
 }
 
-files_to_move = list()
-dirs_to_create = set()
 
-working_directory = Path(
-    input("Specify a working directory that you want to organize: ").strip()
-)
+def confirm_prompt(prompt: str) -> bool:
+    while True:
+        response = input(f"{prompt} (y/n)").strip().lower()
 
-if not working_directory.exists():
-    print(f"{working_directory} does not exist.")
-    exit(1)
+        if response in ("y", "yes"):
+            return True
+        if response in ("n", "no"):
+            return False
 
-if not working_directory.is_dir():
-    print(f"{working_directory} is not a directory.")
-    exit(1)
-
-for item in working_directory.iterdir():
-    if not item.is_file():
-        continue
-
-    category = CATEGORIES.get(item.suffix.lower(), "Other")
-    target_dir = working_directory / category
-    if confirm_prompt(f"Move {item.name} --> {target_dir}?"):
-        files_to_move.append({"file": item, "destination_dir": target_dir})
-
-for file in files_to_move:
-    if not file["destination_dir"].exists():
-        dirs_to_create.add(file["destination_dir"])
+        print("Please enter y or n.")
 
 
-print("Creating directories to move files to...")
-for dir in dirs_to_create:
+def main():
+    planned_moves = []
+    dirs_to_create = set()
+
+    working_directory = Path(
+        input("Specify a working directory that you want to organize: ").strip()
+    ).expanduser()
+
+    if not working_directory.exists():
+        print(f"{working_directory} does not exist.")
+        sys.exit(1)
+
+    if not working_directory.is_dir():
+        print(f"{working_directory} is not a directory.")
+        sys.exit(1)
+
+    for item in sorted(working_directory.iterdir()):
+        if not item.is_file():
+            continue
+
+        category = CATEGORIES.get(item.suffix.lower(), "Other")
+        target_dir = working_directory / category
+        if confirm_prompt(f"Move {item.name} --> {target_dir}?"):
+            planned_moves.append((item, target_dir))
+
+    for source, destination_dir in planned_moves:
+        if not destination_dir.exists():
+            dirs_to_create.add(destination_dir)
+
+    print("Creating directories to move files to...")
+    for directory in dirs_to_create:
+        if DRY_RUN:
+            print(f"Would create {directory}")
+        else:
+            directory.mkdir(parents=True, exist_ok=True)
+
+    print("Directories created...")
+    print("Moving files...")
+
+    summary = []
+
+    for source, destination_dir in planned_moves:
+        if DRY_RUN:
+            summary.append(f"Would move {source.name} to {destination_dir}")
+        else:
+            summary.append(f"Will move {source.name} to {destination_dir}")
+
+    print("\n".join(summary))
+
     if DRY_RUN:
-        print(f"Would create {dir}")
-    else:
-        dir.mkdir(parents=True, exist_ok=True)
+        print("DRY_RUN: Stopping the script.")
+        sys.exit(1)
 
-print("Directories created...")
-print("Moving files...")
+    if confirm_prompt("Proceed with moving files:"):
+        for source, destination_dir in planned_moves:
+            shutil.move(source, destination_dir / source.name)
 
-summary = ""
 
-for file in files_to_move:
-    if DRY_RUN:
-        summary += f"Would move {file['file'].name} to {file['destination_dir']}\n"
-    else:
-        summary += f"Will move {file['file'].name} to {file['destination_dir']}\n"
-
-print(summary)
-
-if DRY_RUN:
-    exit("DRY_RUN: Stopping the script.")
-
-if confirm_prompt("Proceed with moving files:"):
-    for file in files_to_move:
-        shutil.move(file["file"], file["destination_dir"])
+if __name__ == "__main__":
+    main()
