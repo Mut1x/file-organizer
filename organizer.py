@@ -96,12 +96,6 @@ def main():
     planned_moves = plan_moves(working_directory)
     dirs_to_create = collect_directories_to_create(planned_moves)
 
-    for directory in dirs_to_create:
-        if DRY_RUN:
-            print(f"Would create {directory}")
-        else:
-            print(f"Will create {directory}")
-
     print(get_summary_dirs(dirs_to_create, DRY_RUN))
     print(get_summary_moves(planned_moves, DRY_RUN))
 
