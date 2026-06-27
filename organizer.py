@@ -27,11 +27,6 @@ def make_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser()
 
     parser.add_argument("dir", type=expanded_path, help="Directory to organize")
-    parser.add_argument(
-        "--dry-run",
-        help="Show what would happen without moving files.",
-        action="store_true",
-    )
     parser.add_argument("--execute", action="store_true", help="Actually move files.")
 
     return parser
