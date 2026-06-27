@@ -11,7 +11,7 @@ It runs in a safe non-executing dry-run mode by default, showing what would happ
 
 ## Requirements
 - Pyhton 3.9+
-- No extenral dependencies, it only uses `pathlib`, `argparse`, and `shutil` from standard library
+- No extenral dependencies, it only uses `pathlib`, `argparse`, `shutil`, `sys`, and `typing` from standard library
 
 ## Usage
 
