@@ -93,7 +93,7 @@ def get_summary_moves(
     return "\n".join(summary)
 
 
-def get_summary_dirs(dirs_to_create: set[Path], dry_run: bool) -> str:
+def get_summary_dirs(dirs_to_create: set[Path], dry_run: bool = True) -> str:
     summary: list[str] = []
 
     for dir_to_create in dirs_to_create:
