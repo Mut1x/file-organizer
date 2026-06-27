@@ -2,7 +2,7 @@ import argparse
 import shutil
 import sys
 from pathlib import Path
-from typing import Iterable, NoReturn
+from typing import NoReturn
 
 CATEGORIES = {
     ".pdf": "Documents",
@@ -12,6 +12,9 @@ CATEGORIES = {
     ".png": "Images",
     ".txt": "Text",
     ".md": "Text",
+    ".mp3": "Music",
+    ".flac": "Music",
+    ".aac": "Music",
     ".epub": "Documents/Books",
 }
 
@@ -71,7 +74,7 @@ def plan_moves(working_directory: Path) -> list[tuple[Path, Path]]:
 
 
 def collect_directories_to_create(
-    planned_moves: Iterable[tuple[Path, Path]],
+    planned_moves: list[tuple[Path, Path]] = [],
 ) -> set[Path]:
     dirs_to_create = set()
     for source, destination_dir in planned_moves:
@@ -81,8 +84,10 @@ def collect_directories_to_create(
     return dirs_to_create
 
 
-def get_summary_moves(planned_moves: Iterable[tuple[Path, Path]], dry_run: bool) -> str:
-    summary = []
+def get_summary_moves(
+    planned_moves: list[tuple[Path, Path]] = [], dry_run: bool = True
+) -> str:
+    summary: list[str] = []
 
     for source, destination_dir in planned_moves:
         if dry_run:
@@ -94,7 +99,7 @@ def get_summary_moves(planned_moves: Iterable[tuple[Path, Path]], dry_run: bool)
 
 
 def get_summary_dirs(dirs_to_create: set[Path], dry_run: bool) -> str:
-    summary = []
+    summary: list[str] = []
 
     for dir_to_create in dirs_to_create:
         if dry_run:
@@ -114,8 +119,11 @@ def main():
     planned_moves = plan_moves(working_directory)
     dirs_to_create = collect_directories_to_create(planned_moves)
 
-    print(get_summary_dirs(dirs_to_create, dry_run))
-    print(get_summary_moves(planned_moves, dry_run))
+    if dirs_to_create:
+        print(get_summary_dirs(dirs_to_create, dry_run))
+
+    if planned_moves:
+        print(get_summary_moves(planned_moves, dry_run))
 
     if dry_run:
         abort_and_print_message("DRY RUN: Stopping the script.")
