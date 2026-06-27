@@ -1,9 +1,8 @@
+import argparse
 import shutil
 import sys
 from pathlib import Path
 from typing import Iterable, NoReturn
-
-DRY_RUN = True
 
 CATEGORIES = {
     ".pdf": "Documents",
@@ -15,6 +14,24 @@ CATEGORIES = {
     ".md": "Text",
     ".epub": "Documents/Books",
 }
+
+
+def expanded_path(s: str) -> Path:
+    return Path(s).expanduser()
+
+
+def make_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument("dir", type=expanded_path, help="Directory to organize")
+    parser.add_argument(
+        "--dry-run",
+        help="Show what would happen without moving files.",
+        action="store_true",
+    )
+    parser.add_argument("--execute", action="store_true", help="Actually move files.")
+
+    return parser
 
 
 def confirm_prompt(prompt: str) -> bool:
@@ -89,17 +106,18 @@ def get_summary_dirs(dirs_to_create: set[Path], dry_run: bool) -> str:
 
 
 def main():
-    working_directory = Path(
-        input("Specify a working directory that you want to organize: ").strip()
-    ).expanduser()
+    args = make_parser().parse_args()
+
+    working_directory = args.dir
+    dry_run = not args.execute
 
     planned_moves = plan_moves(working_directory)
     dirs_to_create = collect_directories_to_create(planned_moves)
 
-    print(get_summary_dirs(dirs_to_create, DRY_RUN))
-    print(get_summary_moves(planned_moves, DRY_RUN))
+    print(get_summary_dirs(dirs_to_create, dry_run))
+    print(get_summary_moves(planned_moves, dry_run))
 
-    if DRY_RUN:
+    if dry_run:
         abort_and_print_message("DRY RUN: Stopping the script.")
 
     if confirm_prompt("Proceed with moving files and creating directories:"):
